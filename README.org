@@ -1,0 +1,52 @@
+* (experimental) Singularity connector for ansible
+
+this is based on the Ansible
+[[https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/connection/local.py][local connection]] plugin
+
+* Usage
+
+** ansible setup
+
+Find where the ansible plugins directory is. It is probably in
+
+=$PYTHONPATH/lib/python2.7/site-packages/ansible/plugins/connection/=
+
+you can symlink =singularity.py= into that directory
+
+** container
+
+create a container at =/path/to/container.simg=
+by running =sudo singularity image.create /path/to/container.simg/ docker://ubuntu:latest=
+
+** playbook and hosts
+
+Prepare this inventory file at =hosts=
+
+#+BEGIN_SRC conf
+[all]
+/path/to/container.simg ansible_connection=singularity
+#+END_SRC
+
+And this playbook at =playbook.yml=
+
+#+BEGIN_SRC sh :eval never
+- name: test playbook
+  hosts: all
+  connection: singularity
+  tasks:
+  - name: test command
+    shell: whoami
+
+  - name: Update APT package cache
+    apt: update_cache=yes
+
+  - name: install cool stuff
+    apt: name={{ item }} state=present
+    with_items:
+      - tmux
+      - vim
+#+END_SRC
+
+** running
+
+=sudo ansible-playbook -i hosts, playbook.yml=
